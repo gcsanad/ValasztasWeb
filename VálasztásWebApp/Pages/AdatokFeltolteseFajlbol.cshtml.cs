@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using System.Configuration;
 using VálasztásWebApp.Models;
 
 namespace VálasztásWebApp.Pages
@@ -13,6 +15,8 @@ namespace VálasztásWebApp.Pages
         {
             _context = context;
             _env = env;
+            _context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+
         }
 
 
@@ -24,8 +28,8 @@ namespace VálasztásWebApp.Pages
 
         public async Task<IActionResult> OnPostAsync()
         {
-            var UploadDirPath = Path.Combine(_env.ContentRootPath, "Uploads");
-            var UploadFilePath = Path.Combine(UploadDirPath, UploadFile.FileName);
+            
+            var UploadFilePath = Path.Combine(_env.ContentRootPath,"Uploads", UploadFile.FileName);
             using (var stream = new FileStream(UploadFilePath, FileMode.Create))
             {
                 await UploadFile.CopyToAsync(stream);
@@ -36,16 +40,35 @@ namespace VálasztásWebApp.Pages
             while (!sr.EndOfStream)
             {
                 var sor = sr.ReadLine();
-                var elemek = sor.Split();
+                var part = sor?.Split()[4];
+                if (!_context.Partok.Select(x => x.RovidNev).Contains(part))
+                {
+                    Part ujPart = new Part();
+                    ujPart.RovidNev = part;
+                    _context.Partok.Add(ujPart);
+
+                }
+
+
+
+            }
+            sr.Close();
+            _context.SaveChanges();
+
+            sr=new(UploadFilePath);
+            while (!sr.EndOfStream)
+            {
+                var sor = sr.ReadLine();
+                var elemek = sor?.Split();
                 Jelolt ujJelolt = new Jelolt();
-                Part ujPart = new Part();
+                
                 ujJelolt.Kerulet = int.Parse(elemek[0]);
                 ujJelolt.SzavazatokSzama = int.Parse(elemek[1]);
                 ujJelolt.Nev = elemek[2] + " " + elemek[3];
-                ujPart.RovidNev = elemek[4];
-                ujJelolt.Part = ujPart;
+                
+                ujJelolt.PartRovidNev = elemek[4];
                 _context.JeloltekListaja.Add(ujJelolt);
-                _context.Partok.Add(ujPart);
+                
 
 
             }
