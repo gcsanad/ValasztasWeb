@@ -7,6 +7,6 @@
         public string PartRovidNev { get; set; }
         public int Kerulet { get; set; }
         public int SzavazatokSzama { get; set; }
-        public Part Part { get; set; }
+        public virtual Part Part { get; set; }
     }
 }
